@@ -16,16 +16,19 @@ const handleListen = () => console.log(`Listening on http://localhost:3000 and w
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// const handleConnection = (socket) => {
-//      console.log(socket);
-// }
-// wss.on("connection", handleConnection);
+const sockets = [];
 
 wss.on("connection", socket => {
+     sockets.push(socket);
      console.log("Connected to Browser ✅");
      socket.on("close", _ => console.log("Disconnected from the Browser ❌"));
-     socket.on("message", msg => console.log(msg.toString("utf8"))); // message.toString("utf8") => new 'ws' version
-     socket.send("hello!!!");
+     
+     socket.on("message", msg => {
+          msg = msg.toString("utf8");
+          sockets.forEach(aSocket => aSocket.send(msg));
+     })
+
+     console.log(sockets);
 });
 
 server.listen(3000, handleListen);
