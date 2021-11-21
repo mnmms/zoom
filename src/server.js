@@ -20,15 +20,33 @@ const sockets = [];
 
 wss.on("connection", socket => {
      sockets.push(socket);
+     socket["nickname"] = "Anonymous";
      console.log("Connected to Browser ✅");
      socket.on("close", _ => console.log("Disconnected from the Browser ❌"));
      
      socket.on("message", msg => {
           msg = msg.toString("utf8");
-          sockets.forEach(aSocket => aSocket.send(msg));
+          const message = JSON.parse(msg);
+          switch (message.type) {
+               case "new_message":
+                    sockets.forEach(aSocket => aSocket.send(`${socket.nickname}: ${message.payload}`));
+               case "nickname":
+                    socket["nickname"] = message.payload;
+          }
      })
 
-     console.log(sockets);
+     // socket.on("message", msg => {
+     //      msg = msg.toString("utf8");
+     //      const parseMsg = JSON.parse(msg);
+     //      console.log(parseMsg);
+     //      sockets.forEach(aSocket => aSocket.send(msg));
+
+     //      if(parseMsg.type === "nickname") {
+     //           sockets.forEach(aSocket => aSocket.send(parseMsg.payload));
+     //      } else if(parseMsg.type === "new_message") {
+     //           // sockets.forEach(aSocket => aSocket.send(parseMsg.payload));
+     //      }
+     // })
 });
 
 server.listen(3000, handleListen);
