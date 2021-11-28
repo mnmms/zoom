@@ -1,5 +1,5 @@
 import http from 'http';
-import WebSocket from 'ws';
+import SocketIO from 'socket.io';
 import express from 'express';
 
 const app = express();
@@ -10,43 +10,41 @@ app.use("/public", express.static(__dirname + "/public")); //public url를 생�
 app.get("/" , (_, res) => res.render("home")); // home.pug를 render 해주는 route handler
 app.get("/*", (_, res) => res.redirect("/"));
 
-const handleListen = () => console.log(`Listening on http://localhost:3000 and ws://localhost:3000`);
-// app.listen(3000, handleListen);
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
 
-const sockets = [];
+wsServer.on("connection", socket => {
+     // socket.onAny(event => console.log(`Socket Event: ${event}`));
+     socket.on("enter_room", (roomName, done) => {
+          socket.join(roomName);
+          setTimeout(_ => {
+               done("server is done"); //서버에서 호출하고 클라이언트에서 실행
+          }, 5000);
+     });
+})
 
-wss.on("connection", socket => {
-     sockets.push(socket);
-     socket["nickname"] = "Anonymous";
-     console.log("Connected to Browser ✅");
-     socket.on("close", _ => console.log("Disconnected from the Browser ❌"));
-     
-     socket.on("message", msg => {
-          msg = msg.toString("utf8");
-          const message = JSON.parse(msg);
-          switch (message.type) {
-               case "new_message":
-                    sockets.forEach(aSocket => aSocket.send(`${socket.nickname}: ${message.payload}`));
-               case "nickname":
-                    socket["nickname"] = message.payload;
-          }
-     })
-
-     // socket.on("message", msg => {
-     //      msg = msg.toString("utf8");
-     //      const parseMsg = JSON.parse(msg);
-     //      console.log(parseMsg);
-     //      sockets.forEach(aSocket => aSocket.send(msg));
-
-     //      if(parseMsg.type === "nickname") {
-     //           sockets.forEach(aSocket => aSocket.send(parseMsg.payload));
-     //      } else if(parseMsg.type === "new_message") {
-     //           // sockets.forEach(aSocket => aSocket.send(parseMsg.payload));
-     //      }
-     // })
+httpServer.listen(3000, _ => {
+     console.log(`Listening on http://localhost:3000 `);
 });
 
-server.listen(3000, handleListen);
+
+// const sockets = [];
+// wss.on("connection", socket => {
+//      sockets.push(socket);
+//      socket["nickname"] = "Anonymous";
+
+//      console.log("Connected to Browser ✅");
+//      socket.on("close", _ => console.log("Disconnected from the Browser ❌"));
+     
+//      socket.on("message", msg => {
+//           msg = msg.toString("utf8");
+//           const message = JSON.parse(msg);
+//           switch (message.type) {
+//                case "new_message":
+//                     sockets.forEach(aSocket => aSocket.send(`${socket.nickname}: ${message.payload}`));
+//                case "nickname":
+//                     socket["nickname"] = message.payload;
+//           }
+//      })
+// });

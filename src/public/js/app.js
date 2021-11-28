@@ -1,43 +1,17 @@
-const socket = new WebSocket(`ws://${window.location.host}`);
+const socket = io(); //socket.io를 실행하는 서버를 자동 추적
 
-const messageList = document.querySelector("ul");
-const messageForm = document.querySelector("#message");
-const nickForm = document.querySelector("#nick");
+const welcome = document.getElementById("welcome");
+const form = welcome.querySelector("form");
 
-socket.addEventListener("open", _ => {
-     console.log("Connected to Server ✅");
-})
-
-socket.addEventListener("message", msg => {
-     // console.log(`New message: '${msg.data}'`);
-     const li = document.createElement("li");
-     li.innerText = msg.data;
-     messageList.appendChild(li);
-})
-
-socket.addEventListener("close", _ => {
-     console.log("Disconnected to Server ❌");
-})
-
-const makeMessage = (type, payload) => { // type: new_message or nickname
-     const msg = {type, payload};
-     return JSON.stringify(msg);
+const backendDone = msg => {
+     console.log(`The backend says: ${msg}`);
 }
 
-const handleMsgSubmit = event => {
+const handleRoomSubmit = event => {
      event.preventDefault();
-     const input = messageForm.querySelector("input");
-     socket.send(makeMessage("new_message", input.value)); // send to the socket server
-     input.value  = "";
+     const input = form.querySelector("input");
+     socket.emit("enter_room", input.value, backendDone);
+     input.value = "";
 }
 
-const handleNickSubmit = event => {
-     event.preventDefault();
-     const input = nickForm.querySelector("input");
-     socket.send(makeMessage("nickname", input.value));
-     input.value  = "";
-}
-
-
-messageForm.addEventListener("submit", handleMsgSubmit);
-nickForm.addEventListener("submit", handleNickSubmit);
+form.addEventListener("submit", handleRoomSubmit);
